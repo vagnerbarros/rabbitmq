@@ -2,7 +2,7 @@ const amqp = require('amqplib/callback_api');
 
 let args = process.argv.slice(2);
 if(args.length === 0){
-  console.log('Usage node routing.js [info] [warning] [error]');
+  console.log('Usage node routing.js <facility>.<severity>');
   process.exit(1);
 }
 
@@ -16,10 +16,9 @@ amqp.connect('amqp://username:password@localhost/demo_virtual_host', function(co
       throw channelError;
     }
 
-    let exchange = 'direct_logs';
-    let severitys = args;
+    let exchange = 'topic_logs';
   
-    channel.assertExchange(exchange, 'direct', {
+    channel.assertExchange(exchange, 'topic', {
       durable: false
     });
 
@@ -30,10 +29,9 @@ amqp.connect('amqp://username:password@localhost/demo_virtual_host', function(co
         throw queueError;
       }
 
-      severitys.forEach(severity => {
-        channel.bindQueue(q.queue, exchange, severity);
+      args.forEach(key => {
+        channel.bindQueue(q.queue, exchange, key);
       });
-
 
       channel.consume(q.queue, function(msg){
         if(msg.content){
